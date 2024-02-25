@@ -137,6 +137,7 @@ const anim = () => {
 let spawnX;
 let spawnY;
 let spawner = null;
+
 const setGrid = (x, y, type) => {
     try {
         grid[x][y] = type;
@@ -144,19 +145,23 @@ const setGrid = (x, y, type) => {
         console.error('Unable to set grid at ', x, y);
     }
 }
+
 addEventListener('mousedown', (e) => {
     e.preventDefault();
     spawnX = (e.clientX / BLOCK_SIZE) | 0;
     spawnY = (e.clientY / BLOCK_SIZE) | 0;
     console.log(x, y, type)
+    setGrid(spawnX, spawnY, type);
     spawner = setInterval(() => {
         setGrid(spawnX, spawnY, type);
     }, 100);
 })
+
 addEventListener('mousemove', (e) => {
     spawnX = (e.clientX / BLOCK_SIZE) | 0;
     spawnY = (e.clientY / BLOCK_SIZE) | 0;
 })
+
 addEventListener('mouseup', (e) => {
     clearInterval(spawner);
 })

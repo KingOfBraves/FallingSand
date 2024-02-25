@@ -1,0 +1,13 @@
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.button-container {
+    margin-top: 1rem;
+}
+
+.canvas {
+    max-width: max-content;
+    max-height: max-content;
+}
