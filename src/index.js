@@ -34,6 +34,9 @@ const create2DArray = (width, height) => {
 let grid = create2DArray(width, height);
 grid[0][0] = 1;
 
+const checkXWithinGrid = (x) => x > 0 && x < width;
+const checkYWithinGrid = (y) => y > 0 && y < height;
+
 const checkAbove = (x, y, types) => y - 1 > 0 && types.includes(grid[x][y - 1])
 const checkBottom = (x, y, types) => y + 1 <= floor && types.includes(grid[x][y + 1])
 const checkBottomLeft = (x, y, types) => x - 1 >= leftWall && types.includes(grid[x-1][y+1])
@@ -41,23 +44,33 @@ const checkBottomRight = (x, y, types) => x + 1 < rightWall && types.includes(gr
 const checkLeft = (x, y, types) => x - 1 >= leftWall && types.includes(grid[x-1][y])
 const checkRight = (x, y, types) => x + 1 < rightWall && types.includes(grid[x+1][y])
 
+const setGrid = (grid, x, y, type) => {
+    if (checkXWithinGrid(x) && checkYWithinGrid(y)) {
+        try {
+            grid[x][y] = type;
+        } catch (e) {
+            console.error('error inserting at ', x, y, e)
+        }
+    } 
+}
+
 // 0 = fall, 1 == stay, 2 == destroy
 const updateSand = (grid, newGrid, x, y) => {
     if (checkAbove(x, y, [FIRE])) {
-        newGrid[x][y] = FIRE;
+        setGrid(newGrid, x, y, FIRE);
     } else if (y + 1 > floor) {
-        newGrid[x][y] = SAND;
+        setGrid(newGrid, x, y, SAND);
     } else if (checkBottom(x, y, [SAND])) {
         if (!checkBottomLeft(x, y, [SAND])) {
-            newGrid[x-1][y+1] = SAND
+            setGrid(newGrid, x-1, y+1, SAND);
         } else if (!checkBottomRight(x, y, [SAND])) {
-            newGrid[x+1][y+1] = SAND
+            setGrid(newGrid, x+1, y+1, SAND);
         }
         else {
-            newGrid[x][y] = SAND;
+            setGrid(newGrid, x, y, SAND);
         }
     } else {
-        newGrid[x][y + 1] = 1;
+        setGrid(newGrid, x, y+1, SAND)
     }
 }
 
@@ -138,33 +151,41 @@ let spawnX;
 let spawnY;
 let spawner = null;
 
-const setGrid = (x, y, type) => {
-    try {
-        grid[x][y] = type;
-    } catch (e) {
-        console.error('Unable to set grid at ', x, y);
-    }
-}
-
-addEventListener('mousedown', (e) => {
+canvas.addEventListener('mousedown', (e) => {
     e.preventDefault();
     spawnX = (e.clientX / BLOCK_SIZE) | 0;
     spawnY = (e.clientY / BLOCK_SIZE) | 0;
     console.log(x, y, type)
-    setGrid(spawnX, spawnY, type);
+    setGrid(grid, spawnX, spawnY, type);
     spawner = setInterval(() => {
-        setGrid(spawnX, spawnY, type);
+        setGrid(grid, spawnX, spawnY, type);
     }, 100);
 })
 
-addEventListener('mousemove', (e) => {
+canvas.addEventListener('mousemove', (e) => {
     spawnX = (e.clientX / BLOCK_SIZE) | 0;
     spawnY = (e.clientY / BLOCK_SIZE) | 0;
 })
 
-addEventListener('mouseup', (e) => {
+canvas.addEventListener('mouseup', (e) => {
     clearInterval(spawner);
 })
 
+/**
+ * Key handlers for changing types
+ */
+
+addEventListener('keydown', (e) => {
+    switch (e.key) {
+        case 'f':
+        case 'F':
+            setFire();
+            break;
+        case 's':
+        case 'S':
+            setSand();
+            break;
+    }
+})
 
 window.requestAnimationFrame(anim);
