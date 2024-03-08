@@ -1,18 +1,60 @@
-html {
+html, body {
     background-color: bisque;
+    height: 100%;
 }
 
 .container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.canvas-container {
     display: flex;
     flex-direction: column;
 }
 
 .button-container {
     margin-top: 1rem;
+    flex-wrap: nowrap;
 }
 
 .canvas {
     max-width: max-content;
     max-height: max-content;
     background-color: aliceblue;
+}
+
+.spacer {
+    width: 1rem;
+}
+
+.button-right {
+
+}
+
+input[type="range"] {
+    appearance: none;
+    height: 1px;
+    background: black;
+}
+
+input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance: none;
+    appearance: none;
+    height: 10px;
+    width: 10px;
+    background: white;
+    border-radius: 1px;
+    border-color: black;
+    margin: 0;
+}
+
+input[type="range"]::-moz-range-thumb{
+    height: 10px;
+    width: 10px;
+    background: white;
+    border-radius: 1px;
+    border-color: black;
 }

@@ -1,5 +1,5 @@
 // Size of our sand
-const BLOCK_SIZE = 5;
+const BLOCK_SIZE = 2;
 
 const canvas = document.getElementById("sandCanvas")
 const ctx = canvas.getContext("2d");
@@ -15,12 +15,18 @@ const rightWall = width - 1;
  * 2 = fire
  * 1 = sand
  */
+const ERASE = 0;
 const SAND = 1;
 const FIRE = 2;
+const CONCRETE = 3;
 let type = SAND;
 
-const setSand = () => type = SAND;
-const setFire = () => type = FIRE;
+
+const setType = (t) => type = t;
+const setSand = () => setType(SAND);
+const setFire = () => setType(FIRE);
+const setConcrete = () => setType(CONCRETE);
+const setErase = () => setType(ERASE);
 
 const create2DArray = (width, height) => {
     const arr = new Array(width);
@@ -37,14 +43,47 @@ grid[0][0] = 1;
 const checkXWithinGrid = (x) => x > 0 && x < width;
 const checkYWithinGrid = (y) => y > 0 && y < height;
 
+/*
+    Space checks
+*/
 const checkAbove = (x, y, types) => y - 1 > 0 && types.includes(grid[x][y - 1])
+const checkAboveLeft = (x, y, types) => y - 1 > 0 && x - 1 >= leftWall && types.includes(grid[x-1][y-1])
+const checkAboveRight = (x, y, types) => y - 1 > 0 && x + 1 < rightWall && types.includes(grid[x+1][y-1])
 const checkBottom = (x, y, types) => y + 1 <= floor && types.includes(grid[x][y + 1])
 const checkBottomLeft = (x, y, types) => x - 1 >= leftWall && types.includes(grid[x-1][y+1])
 const checkBottomRight = (x, y, types) => x + 1 < rightWall && types.includes(grid[x+1][y+1])
 const checkLeft = (x, y, types) => x - 1 >= leftWall && types.includes(grid[x-1][y])
 const checkRight = (x, y, types) => x + 1 < rightWall && types.includes(grid[x+1][y])
 
-const setGrid = (grid, x, y, type) => {
+const checkNeighbours = (x, y, types) => {
+    let total = 0;
+    if (checkAbove(x, y, types)) {
+        total += 1;
+    }
+    if (checkAboveLeft(x, y, types)) {
+        total += 1;
+    }
+    if (checkAboveRight(x, y, types)) {
+        total += 1;
+    }
+    if (checkBottom(x, y, types)) {
+        total += 1;
+    }
+    if (checkBottomLeft(x, y, types)) {
+        total += 1;
+    }
+    if (checkBottomRight(x, y, types)) {
+        total += 1;
+    }
+    if (checkLeft(x, y, types)) {
+        total += 1;
+    }
+    if (checkRight(x, y, types)) {
+        total += 1;
+    }
+    return total;
+}
+const setGrid = (grid, x, y, type, allowFlip) => {
     if (checkXWithinGrid(x) && checkYWithinGrid(y)) {
         try {
             grid[x][y] = type;
@@ -56,14 +95,14 @@ const setGrid = (grid, x, y, type) => {
 
 // 0 = fall, 1 == stay, 2 == destroy
 const updateSand = (grid, newGrid, x, y) => {
-    if (checkAbove(x, y, [FIRE])) {
+    if (checkNeighbours(x, y, [FIRE]) > 0) {
         setGrid(newGrid, x, y, FIRE);
     } else if (y + 1 > floor) {
         setGrid(newGrid, x, y, SAND);
-    } else if (checkBottom(x, y, [SAND])) {
-        if (!checkBottomLeft(x, y, [SAND])) {
+    } else if (checkBottom(x, y, [SAND, CONCRETE])) {
+        if (!checkBottomLeft(x, y, [SAND, CONCRETE])) {
             setGrid(newGrid, x-1, y+1, SAND);
-        } else if (!checkBottomRight(x, y, [SAND])) {
+        } else if (!checkBottomRight(x, y, [SAND, CONCRETE])) {
             setGrid(newGrid, x+1, y+1, SAND);
         }
         else {
@@ -86,16 +125,23 @@ const updateFire = (grid, newGrid, x, y) => {
     }
 }
 
+const updateConcrete = (grid, newGrid, x, y) => {
+    setGrid(newGrid, x, y, CONCRETE);
+}
+
 const updateGrid = () => {
     const newGrid = create2DArray(width, height);
     for (x = 0; x < grid.length; x++) {
         for (y = 0; y < grid[x].length; y++) {
             switch (grid[x][y]) {
-                case 1:
+                case SAND:
                     updateSand(grid, newGrid, x, y);
                     break;
-                case 2:
+                case FIRE:
                     updateFire(grid, newGrid, x, y);
+                    break;
+                case CONCRETE:
+                    updateConcrete(grid, newGrid, x, y);
                     break;
                 default:
                     break;
@@ -116,6 +162,11 @@ const drawFire = (ctx, x, y, type) => {
     ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
 }
 
+const drawConcrete = (ctx, x, y, type) => {
+    ctx.fillStyle = "green";
+    ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+}
+
 const draw = (ctx, grid) => {
     for (x = 0; x < grid.length; x++) {
         for (y = 0; y < grid[x].length; y++) {
@@ -125,6 +176,9 @@ const draw = (ctx, grid) => {
                     break;
                 case 2:
                     drawFire(ctx, x, y);
+                    break;
+                case CONCRETE:
+                    drawConcrete(ctx, x, y);
                     break;
                 default:
                     break;
@@ -152,19 +206,22 @@ let spawnY;
 let spawner = null;
 
 canvas.addEventListener('mousedown', (e) => {
+    const rect = canvas.getBoundingClientRect();
     e.preventDefault();
-    spawnX = (e.clientX / BLOCK_SIZE) | 0;
-    spawnY = (e.clientY / BLOCK_SIZE) | 0;
-    console.log(x, y, type)
+    console.log()
+    spawnX = ((e.clientX - rect.left) / BLOCK_SIZE) | 0;
+    spawnY = ((e.clientY - rect.top) / BLOCK_SIZE) | 0;
+    console.log(e.clientX, e.clientY, spawnX, spawnY, rect)
     setGrid(grid, spawnX, spawnY, type);
     spawner = setInterval(() => {
         setGrid(grid, spawnX, spawnY, type);
-    }, 100);
+    }, 10);
 })
 
 canvas.addEventListener('mousemove', (e) => {
-    spawnX = (e.clientX / BLOCK_SIZE) | 0;
-    spawnY = (e.clientY / BLOCK_SIZE) | 0;
+    const rect = canvas.getBoundingClientRect();
+    spawnX = ((e.clientX - rect.left) / BLOCK_SIZE) | 0;
+    spawnY = ((e.clientY - rect.top) / BLOCK_SIZE) | 0;
 })
 
 canvas.addEventListener('mouseup', (e) => {
@@ -184,6 +241,14 @@ addEventListener('keydown', (e) => {
         case 's':
         case 'S':
             setSand();
+            break;
+        case 'c':
+        case 'C':
+            setType(CONCRETE);
+            break;
+        case 'e':
+        case 'E':
+            setType(ERASE);
             break;
     }
 })

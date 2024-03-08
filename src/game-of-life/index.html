@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="../index.css" > 
+    </head>
+    <body>
+        <div class="container">
+            <div class="canvas-container">
+                <canvas class="canvas" id="sandCanvas" width="400" height="400" style="border: 1px solid black; "></canvas>
+                <div class="button-container">
+                    <button onClick="startLife()">Start</button>
+                    <button onClick="stopLife()">Stop</button>
+                    
+                    <button class="button-right" onClick="reset()">Reset</button>
+                    <label for="timeRange">Time</label>
+                    <input oninput="setTime(this.value)" type="range" step="10" min="100" max="1000" id="timeRange" >
+                </div>
+            </div>
+        </div>
+            
+        <script src="index.js" ></script>
+    </body>
+</html>
